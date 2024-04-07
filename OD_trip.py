@@ -2,7 +2,7 @@ import polars as pl
 
 FILE_PATH = "../data_tesis/data_geo"
 OUTPUT_PATH = "../data_tesis/output"
-date = "0315" # MMDD
+date = "0320" # MMDD
 
 # para observar un dataframe, usar print(df.fetch(streaming=True).head())
 
