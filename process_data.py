@@ -1,6 +1,6 @@
 import time
 from device_group import generate_df_device_group_by_month
-from OD_trip import generate_df_OD_trip
+from xdr_hour import generate_df_xdr_hour
 from OD_trip_by_category import generate_df_OD_trip_by_category
 
 raw_data_path = "../data_tesis/data_geo"
@@ -22,7 +22,7 @@ print("Hecho")
 for day in days:
     date = month + day # MMDD
     print(f"Calculando trayectorias OD para la fecha {date}...", end="")
-    generate_df_OD_trip(
+    generate_df_xdr_hour(
         xdr_raw_file_path=f"{raw_data_path}/new_geo_data_{date}.csv",
         device_id_file_path=f"{raw_data_path}/users_oldid_2_newid.csv",
         output_file_path=f"{output_path}/OD_trips_{date}.csv"
