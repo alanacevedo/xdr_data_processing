@@ -1,6 +1,4 @@
 import csv
-import time
-
 
 """
 Genera un csv donde cada fila contiene la ubicación de un dispositivo a cada hora del día.
@@ -9,7 +7,6 @@ Tener en consideración: estoy asumiendo que se tienen TODOS los pings de cada d
 Por esto puedo asumir que en horas que no tengan datos, está en el mismo lugar que antes
 """
 def generate_trajectory(xdr_hour_file_path, output_file_path):
-    start_time = time.perf_counter()
 
     with open(xdr_hour_file_path, "r", newline='') as xdr_hour_file, open(output_file_path, "w", newline='') as output_file:
 
@@ -29,6 +26,9 @@ def generate_trajectory(xdr_hour_file_path, output_file_path):
         curr_hour = 0
         last_pos = None, None
         
+        # ignore headers
+        next(reader)
+
         for row in reader:
             device_id, hour, lat, lon = row
             hour = int(hour)
@@ -47,29 +47,28 @@ def generate_trajectory(xdr_hour_file_path, output_file_path):
                 curr_hour = 0
                 last_pos = None, None
 
-            # si no ha cambiado de hora, ignorar
-            if hour == curr_hour:
-                continue
             
-            # voy a asumir que a las 00 hrs el dispositivo se encontraba donde aparece el primer dato xdr de ese día
-            # quizás debería dejar Null para el primer día de la semana, y para los demás usar el último valor del día anterior
+            if hour != curr_hour:
+                # ha cambiado de hora. Entre la última hora y la actual (excluyente), el dispositivo se ha encontrado en last_pos
 
-            if last_pos == (None, None):
-                last_pos = lat, lon
-            
-            while curr_hour < hour:
-                curr_trajectory.extend(last_pos)
-                curr_hour += 1
+                if last_pos == (None, None):
+                    # voy a asumir que a las 00 hrs el dispositivo se encontraba donde aparece el primer dato xdr de ese día
+                    # quizás debería dejar Null para el primer día de la semana, y para los demás usar el último valor del día anterior
+                    # el problema es que en los distintos días no siempre están los mismos dispositivos
+                    last_pos = lat, lon
+                
+                while curr_hour < hour:
+                    curr_trajectory.extend(last_pos)
+                    curr_hour += 1
             
             last_pos = lat, lon
             
-    end_time = time.perf_counter()
-    print(end_time - start_time)
 
-
+"""
 #testing
 date = "0316"
 generate_trajectory(
     xdr_hour_file_path=f"../data_tesis/output/xdr_hour_{date}.csv",
-    output_file_path=f"../data_tesis/output/trayectory_{date}.csv"
+    output_file_path=f"../data_tesis/output/device_trajectory_{date}.csv"
 )
+"""
