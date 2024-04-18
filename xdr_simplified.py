@@ -13,7 +13,7 @@ https://docs.pola.rs/py-polars/html/reference/dataframe/api/polars.DataFrame.gro
 https://docs.pola.rs/py-polars/html/reference/dataframe/api/polars.DataFrame.filter.html#polars.DataFrame.filter
 Esto permite evitar tener que hacer un sort.
 """
-def generate_df_xdr_hour(xdr_raw_file_path, device_id_file_path, output_file_path):
+def generate_df_xdr_simplified(xdr_raw_file_path, device_id_file_path, output_file_path):
 
 
     # los archivos new_geo_data_MMDD no tienen headers
@@ -40,9 +40,6 @@ def generate_df_xdr_hour(xdr_raw_file_path, device_id_file_path, output_file_pat
 
     # Seleccionar solo datos de interés
     df_xdr = df_device_id_joined_with_hour.select(pl.col("device_id"), pl.col("hour"), pl.col("lat"), pl.col("lon"))
-
-    print(df_xdr.fetch(streaming=True).head(n=20))
-
     
     try:
         df_xdr.sink_csv(output_file_path)

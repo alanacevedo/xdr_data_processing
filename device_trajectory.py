@@ -6,9 +6,9 @@ Genera un csv donde cada fila contiene la ubicación de un dispositivo a cada ho
 Tener en consideración: estoy asumiendo que se tienen TODOS los pings de cada dispositivo.
 Por esto puedo asumir que en horas que no tengan datos, está en el mismo lugar que antes
 """
-def generate_trajectory(xdr_hour_file_path, output_file_path):
+def generate_trajectories(xdr_simplified_file_path, output_file_path):
 
-    with open(xdr_hour_file_path, "r", newline='') as xdr_hour_file, open(output_file_path, "w", newline='') as output_file:
+    with open(xdr_simplified_file_path, "r", newline='') as xdr_hour_file, open(output_file_path, "w", newline='') as output_file:
 
         # device_id, hour, lat, lon
         reader = csv.reader(xdr_hour_file) 
