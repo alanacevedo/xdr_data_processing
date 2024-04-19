@@ -4,7 +4,8 @@ import polars as pl
 from device_group import generate_df_device_group_by_month
 from xdr_simplified import generate_df_xdr_simplified
 from device_trajectory import generate_trajectories
-from OD_by_group import generate_OD_by_group
+from od_by_group import generate_od_by_group
+from process_od_df import process_od_df
 
 raw_data_path = "../data_tesis/data_geo"
 output_path = "../data_tesis/output"
@@ -55,7 +56,8 @@ for month in month_to_days:
             generate_df_xdr_simplified(
                 xdr_raw_file_path=f"{raw_data_path}/new_geo_data_{date}.csv",
                 device_id_file_path=f"{raw_data_path}/users_oldid_2_newid.csv",
-                output_file_path=xdr_simplified_file_path
+                output_file_path=xdr_simplified_file_path,
+                month=month
                 )
 
         
@@ -69,8 +71,14 @@ for month in month_to_days:
 # se opera en este orden para no tener que usar tanta memoria secundaria al mismo tiempo
 for start_hour in range(24):
     for end_hour in range(start_hour, 24):
-        print(f"Generando flujos OD entre horas {start_hour} y  {end_hour}")
+
         base_path = f"{output_path}/od_{start_hour}_{end_hour}_{quantile}"
+
+        # ignorar si ya se calculó esta combinación antes
+        if os.path.isfile(f"{base_path}.csv"):
+            continue
+
+        print(f"Generando flujos OD entre horas {start_hour} y  {end_hour}")
         for month in month_to_days:
             
             # primero, generar los flujos OD para cada día
@@ -79,7 +87,7 @@ for start_hour in range(24):
 
             for od_by_group_file_path in days_od_path_list:
 
-                generate_OD_by_group(
+                generate_od_by_group(
                     device_trajectory_file_path=device_trajectory_file_path,
                     device_group_file_path=device_group_file_path,
                     output_file_path= od_by_group_file_path,
@@ -106,20 +114,19 @@ for start_hour in range(24):
         # ahora agregación de flujos de cada mes según count
         months_od_path_list = [f"{base_path}_{month}.csv" for month in month_to_days]  
         df_od_month_concat = pl.concat(list(map(pl.read_csv, months_od_path_list)))
-        df_od_month = df_od_month_concat.group_by(
+        df_od = df_od_month_concat.group_by(
                 ["lat_O", "lon_O", "lat_D", "lon_D", "group"]
             ).agg(pl.sum("count"))
         
-        try:
-            df_od_month.write_csv(f"{base_path}.csv")
-        except Exception as e:
-            print(e)
+        #
+        process_od_df(
+            df_od=df_od,
+            output_file_path=f"{base_path}.csv"
+        )
         
         # limpiar archivos temporales de los meses
         for path in months_od_path_list:
             os.remove(path)
-
-
 
 end_time = time.perf_counter()
 

@@ -13,13 +13,13 @@ https://docs.pola.rs/py-polars/html/reference/dataframe/api/polars.DataFrame.gro
 https://docs.pola.rs/py-polars/html/reference/dataframe/api/polars.DataFrame.filter.html#polars.DataFrame.filter
 Esto permite evitar tener que hacer un sort.
 """
-def generate_df_xdr_simplified(xdr_raw_file_path, device_id_file_path, output_file_path):
+def generate_df_xdr_simplified(xdr_raw_file_path, device_id_file_path, output_file_path, month):
 
 
     # los archivos new_geo_data_MMDD no tienen headers
     col_names = ['fecha', 'hora', 'duracion', 'device_id_str', 'rinhead', 'rintail', 'custom_tower', 'lat', 'lon', 'minvu']
     df_raw_data = pl.scan_csv(xdr_raw_file_path,
-                            has_header=False,
+                            has_header=(month == "11"), # los archivos del mes 11 si vienen con header
                             new_columns=col_names
                             )
 
