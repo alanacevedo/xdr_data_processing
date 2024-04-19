@@ -22,6 +22,8 @@ Agrega el valor de count normalizado.
 Finalmente ordena según distancia.
 """
 def process_od_df(df_od: pl.DataFrame, output_file_path):
+    if not len(df_od): return
+    
     # no considerar aquellos OD cuyo count es bajo, para reducir cantidad de nodos
     # arbitrariamente decidí que no se consideren los que tengan count dentro del 20% más bajo
     
