@@ -34,6 +34,11 @@ month_to_days = {
 }
 start_time = time.perf_counter()
 
+# Se trabaja mes a mes.
+# Se calcula los cuantiles ISMT de cada dispositivo presente en el mes, basánsdose en su hogar de residencia estimado.
+# Después para cada día se obtienen los datos XDR simplificados (sólo id, latlon, hora)
+# Y para cada día, se obtiene la trayectoria de cada dispositivo en el día (1 pos por hora)
+
 for month in month_to_days:
     device_group_file_path = f"{output_path}/device_ismt_group_{month}.csv"
     if not os.path.isfile(device_group_file_path):
@@ -49,7 +54,6 @@ for month in month_to_days:
     for day in days:
         date = month + day # MMDD
         xdr_simplified_file_path = f"{output_path}/xdr_simplified_{date}.csv"
-        device_trajectory_file_path = f"{output_path}/device_trajectories_{date}.csv"
 
         if not os.path.isfile(xdr_simplified_file_path):
             print(f"Obteniendo datos XDR simplificados para la fecha {date}...")
@@ -60,6 +64,7 @@ for month in month_to_days:
                 month=month
                 )
 
+        device_trajectory_file_path = f"{output_path}/device_trajectories_{date}.csv"
         
         if not os.path.isfile(device_trajectory_file_path):
             print(f"Generando trayectorias para la fecha {date}... ")
@@ -68,14 +73,14 @@ for month in month_to_days:
                 output_file_path=device_trajectory_file_path
             )
 
-# se opera en este orden para no tener que usar tanta memoria secundaria al mismo tiempo
+
+# Para cada combinación de hora inicio y hora fin, se calculan los flujos OD agrupados según cuantil, considerando todos los meses.
 for start_hour in range(24):
     for end_hour in range(start_hour, 24):
-
         base_path = f"{output_path}/od_{start_hour}_{end_hour}_{quantile}"
+        unprocessed_path = f"{base_path}_unprocessed.csv"
 
-        # ignorar si ya se calculó esta combinación antes
-        if os.path.isfile(f"{base_path}.csv"):
+        if os.path.isfile(unprocessed_path):
             continue
 
         print(f"Generando flujos OD entre horas {start_hour} y  {end_hour}")
@@ -96,7 +101,7 @@ for start_hour in range(24):
                     quantile=quantile
                 )
             
-            # agergación de flujos de cada día de este mes según count
+            # agergación de flujos de cada día de este mes según group.
             df_od_week_concat = pl.concat(list(map(pl.read_csv, days_od_path_list)))
             df_od_week = df_od_week_concat.group_by(
                 ["lat_O", "lon_O", "lat_D", "lon_D", "group"]
@@ -118,15 +123,33 @@ for start_hour in range(24):
                 ["lat_O", "lon_O", "lat_D", "lon_D", "group"]
             ).agg(pl.sum("count"))
         
-        #
-        process_od_df(
-            df_od=df_od,
-            output_file_path=f"{base_path}.csv"
-        )
-        
-        # limpiar archivos temporales de los meses
+        try:
+            df_od.write_csv(unprocessed_path)
+        except Exception as e:
+            print(e)
+
         for path in months_od_path_list:
             os.remove(path)
+
+
+for start_hour in range(24):
+    for end_hour in range(start_hour, 24):
+
+        base_path = f"{output_path}/od_{start_hour}_{end_hour}_{quantile}"
+        unprocessed_path = f"{base_path}_unprocessed.csv"
+
+        df_od = pl.read_csv(unprocessed_path)
+            
+        process_od_df(
+            df_od=df_od,
+            output_path=output_path,
+            start_hour=start_hour,
+            end_hour=end_hour,
+            quantile=quantile
+        )
+        
+        
+        
 
 end_time = time.perf_counter()
 

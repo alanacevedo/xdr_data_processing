@@ -1,6 +1,6 @@
 import polars as pl
 
-# bounds santiago, al ojimetro
+# bounds santiago
 LAT_LOWER = -33.96
 LAT_UPPER = -33.2
 LON_LOWER = -71
