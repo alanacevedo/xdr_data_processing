@@ -16,7 +16,7 @@ def process_od_df(df_od: pl.DataFrame, output_path: str, start_hour: int, end_ho
     
     print(f"Processing OD for hours {start_hour}, {end_hour}")
 
-    for res in [7, 8, 9]:
+    for res in [5, 6, 7, 8, 9]:
         directory = f"{output_path}/h3_{res}"
         path = f"{directory}/od_{start_hour}_{end_hour}_{quantile}.csv"
         if os.path.exists(path):
